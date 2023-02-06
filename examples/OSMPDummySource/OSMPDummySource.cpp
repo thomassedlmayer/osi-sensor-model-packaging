@@ -14,7 +14,7 @@
 
 #include "OSMPDummySource.h"
 
-#define NO_LIDAR_REFLECTIONS
+//#define NO_LIDAR_REFLECTIONS
 #define LIDAR_NUM_LAYERS 0
 #define OBJECTS_MULT 50
 
@@ -306,7 +306,7 @@ fmi2Status COSMPDummySource::doCalc(fmi2Real currentCommunicationPoint, fmi2Real
         normal_log("OSI","GT: Adding Vehicle %d[%llu] Absolute Position: %f,%f,%f Velocity (%f,%f,%f)",i,veh->id().value(),veh->base().position().x(),veh->base().position().y(),veh->base().position().z(),veh->base().velocity().x(),veh->base().velocity().y(),veh->base().velocity().z());
     }
 
-    std::cout << "DummySource time doCalc(): " << time << std::endl;
+    // std::cout << "DummySource time doCalc(): " << time << std::endl;
 
     //check if file exists
     std::ifstream f(fileName.c_str());

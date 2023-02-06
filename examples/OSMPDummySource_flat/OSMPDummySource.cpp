@@ -16,9 +16,9 @@
 
 #include "OSMPDummySource.h"
 
-#define NO_LIDAR_REFLECTIONS
+//#define NO_LIDAR_REFLECTIONS
 #define LIDAR_NUM_LAYERS 32
-#define OBJECTS_MULT 1
+#define OBJECTS_MULT 10 // OBJECTS_MULT*10
 
 /*
  * Debug Breaks
@@ -245,6 +245,7 @@ fmi2Status COSMPDummySource::doCalc(fmi2Real currentCommunicationPoint, fmi2Real
     double const_distance = 10.0;
     double speed_of_light = 299792458.0;
 
+    int number_of_reflections = 0;
     std::vector<flatbuffers::Offset<osi3::LidarSensorView_::Reflection>> reflection_vector;
     // Simulation of lower number of rays because of SET Level improvements
     for (int elevation_idx = 0; elevation_idx < no_of_layers * rays_per_beam_vertical; elevation_idx++) {
@@ -255,8 +256,11 @@ fmi2Status COSMPDummySource::doCalc(fmi2Real currentCommunicationPoint, fmi2Real
             reflection_builder.add_signal_strength(max_emitted_signal_strength_in_dB + 10 * std::log10(attenuation) - 10 * std::log10(rays_per_beam));  // assuming equal distribution of beam power per ray
             auto ray = reflection_builder.Finish();
             reflection_vector.push_back(ray);
+            number_of_reflections = number_of_reflections + 1;
         }
     }
+
+    normal_log("OSI","Number of Reflections: %f)", number_of_reflections);
 
     auto reflection_flat_vector = builder.CreateVector(reflection_vector);
     osi3::LidarSensorViewBuilder lidar_sensor_view_builder(builder);
@@ -283,6 +287,8 @@ fmi2Status COSMPDummySource::doCalc(fmi2Real currentCommunicationPoint, fmi2Real
             osi3::MovingObject_::VehicleClassification_::Type::TYPE_SMALL_CAR,
             osi3::MovingObject_::VehicleClassification_::Type::TYPE_MOTORBIKE,
             osi3::MovingObject_::VehicleClassification_::Type::TYPE_BUS };
+    
+    normal_log("OSI","Number of Moving Objects: %f)", (10*OBJECTS_MULT));
 
     std::vector<flatbuffers::Offset<osi3::MovingObject>> moving_object_vector;
     for (unsigned int i=0;i<(10*OBJECTS_MULT);i++) {
@@ -395,7 +401,12 @@ fmi2Status COSMPDummySource::doCalc(fmi2Real currentCommunicationPoint, fmi2Real
         logFile << "\t\"Data\": [" << std::endl;
         logFile << "\t\t{" << std::endl;
         logFile << "\t\t\t\"Instance\": {" << std::endl;
-        logFile << "\t\t\t\t\"ModelIdentity\": " << "\"OSMPDummySource Flatbuf\"" << std::endl;
+        logFile << "\t\t\t\t\"ModelIdentity\": " << "\"OSMPDummySource Flatbuf\""<< "," << std::endl;
+#ifndef NO_LIDAR_REFLECTIONS
+        logFile << "\t\t\t\t\"LIDAR_NUM_LAYERS\": " << LIDAR_NUM_LAYERS << "," << std::endl;
+        logFile << "\t\t\t\t\"Number of reflections\": " << number_of_reflections << "," << std::endl;
+#endif
+        logFile << "\t\t\t\t\"OBJECTS_MULT\": " << OBJECTS_MULT << std::endl;
         /*logFile << "\t\t\t\t\"ModelIdentity\": " << "\"OSMPDummySource Flatbuf\"" << "," << std::endl;
         logFile << "\t\t\t\t\"OsiVersion\": {" << std::endl;
         logFile << "\t\t\t\t\t\"version_major\": " << sensor_view_in->version()->version_major() << "," << std::endl;
